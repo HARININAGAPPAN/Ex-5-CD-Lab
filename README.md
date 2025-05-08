@@ -20,45 +20,59 @@ cd5.l
 %}
 
 %%
-a    { return A; }  // Recognize 'a' as token A
-b    { return B; }  // Recognize 'b' as token B
-.    { return 0; }  // End of input
+a   { return A; }
+b   { return B; }
+\n  { return '\n'; }
+.   { return yytext[0]; }
 %%
 
 int yywrap() {
     return 1;
 }
+
 ```
 cd5.y
 ```
 %{
 #include <stdio.h>
-int yylex(void);
-void yyerror(const char *s);
+#include <stdlib.h>
+int count = 0;  // to count number of a's
 %}
 
 %token A B
 
 %%
-S   : A A A A A A A A A A B    { printf("Valid string\n"); }
-    | A S B                    { printf("Valid string\n"); }
+start:
+    sequence B '\n' {
+        if (count >= 10) {
+            printf("Valid string: %d a's followed by b\n", count);
+        } else {
+            printf("Invalid: Less than 10 a's\n");
+        }
+        count = 0; // reset for next input
+    }
     ;
 
+sequence:
+    A { count++; }
+  | sequence A { count++; }
+  ;
 %%
 
 int main() {
-    printf("Enter a string:\n");
-    yyparse();
-    return 0;
+    printf("Enter a string (aⁿb where n >= 10):\n");
+    return yyparse();
 }
 
-void yyerror(const char *s) {
-    printf("Invalid string\n");
+void yyerror(const char *msg) {
+    printf("Syntax error: %s\n", msg);
 }
+
 ```
 
 # OUTPUT
-![Screenshot 2025-04-29 095154](https://github.com/user-attachments/assets/12be0e4e-c438-4011-9a61-97890474a993)
+![Screenshot 2025-05-08 142756](https://github.com/user-attachments/assets/b0dd8d94-3a00-47fc-ba10-b4e1e41fb707)
+
 
 # RESULT
 The YACC program to recognize the grammar anb where n>=10 is executed successfully and the output is verified.
